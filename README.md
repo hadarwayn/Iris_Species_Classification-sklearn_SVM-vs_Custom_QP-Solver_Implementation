@@ -568,10 +568,10 @@ X_normalized = scaler.fit_transform(X)
 ### External References
 - [cvxopt documentation](https://cvxopt.org/)
 - [sklearn SVC](https://scikit-learn.org/stable/modules/svm.html)
-- Andrew Ng's CS229 SVM Notes
 
 ---
 
-**Course:** AI Developer Expert - Optimization Methods (L23)
-**Project:** Machine Learning Classification Comparison
-**Date:** December 2025
+- **Course:** AI Developer Expert - Optimization Methods (L23)
+- **Project:** Machine Learning Classification Comparison
+- **Date:** December 2025
+- **Author:** Hadar Wayn
