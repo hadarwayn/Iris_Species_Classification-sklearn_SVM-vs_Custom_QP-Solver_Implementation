@@ -1,0 +1,57 @@
+{
+  "run_number": 1,
+  "parameters": {
+    "C": 1.0,
+    "kernel": "linear",
+    "test_size": 0.2
+  },
+  "sklearn": {
+    "accuracy": 1.0,
+    "training_time": 0.0012,
+    "n_support_vectors": 23,
+    "classification_report": {
+      "class_0": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "class_1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "class_2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "accuracy": 1.0
+    }
+  },
+  "qp_solver": {
+    "accuracy": 1.0,
+    "training_time": 0.5464,
+    "n_support_vectors": 114,
+    "classification_report": {
+      "class_0": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "class_1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "class_2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "accuracy": 1.0
+    }
+  },
+  "comparison": {
+    "weight_cosine_similarity": null
+  }
+}

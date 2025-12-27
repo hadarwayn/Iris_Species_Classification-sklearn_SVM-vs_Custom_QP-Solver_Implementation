@@ -1,0 +1,597 @@
+{
+  "project_name": "Iris Species Classification - SVM vs QP-Solver Implementation",
+  "version": "2.0",
+  "description": "Educational comparison demonstrating mathematical equivalence between scikit-learn SVM and custom Quadratic Programming solver on Iris dataset",
+  "learning_objectives": [
+    "Understand inner product as decision rule",
+    "Apply three mathematical tricks to convert SVM to QP",
+    "Implement primal QP formulation using cvxopt",
+    "Compare production library vs hand-built solver",
+    "Identify and interpret support vectors"
+  ],
+  "phases": [
+    {
+      "phase": "1_setup",
+      "description": "Project structure and UV virtual environment setup",
+      "tasks": [
+        {
+          "id": "1.1",
+          "name": "Create directory structure",
+          "priority": "critical",
+          "dependencies": [],
+          "files_to_create": [
+            "main.py",
+            "requirements.txt",
+            ".gitignore",
+            "src/__init__.py",
+            "src/utils/__init__.py",
+            "results/.gitkeep",
+            "results/graphs/.gitkeep",
+            "results/examples/.gitkeep",
+            "logs/.gitkeep",
+            "logs/config/log_config.json"
+          ],
+          "validation": "All directories and placeholder files exist"
+        },
+        {
+          "id": "1.2",
+          "name": "Set up UV virtual environment",
+          "priority": "critical",
+          "dependencies": ["1.1"],
+          "commands_windows": [
+            "uv venv",
+            ".venv\\Scripts\\activate",
+            "uv pip install -r requirements.txt"
+          ],
+          "commands_wsl": [
+            "uv venv",
+            "source .venv/bin/activate",
+            "uv pip install -r requirements.txt"
+          ],
+          "validation": "All packages installed, no errors"
+        },
+        {
+          "id": "1.3",
+          "name": "Create requirements.txt with pinned versions",
+          "priority": "critical",
+          "dependencies": ["1.1"],
+          "content": [
+            "numpy>=1.24.0",
+            "pandas>=2.0.0",
+            "scikit-learn>=1.3.0",
+            "cvxopt>=1.3.0",
+            "matplotlib>=3.7.0",
+            "seaborn>=0.12.0"
+          ],
+          "validation": "File exists with all dependencies"
+        }
+      ]
+    },
+    {
+      "phase": "2_utilities",
+      "description": "Core utilities: paths, logging, configuration",
+      "tasks": [
+        {
+          "id": "2.1",
+          "name": "Implement path utilities module",
+          "priority": "critical",
+          "dependencies": ["1.1"],
+          "files_to_create": ["src/utils/paths.py"],
+          "requirements": [
+            "Use pathlib for all path operations",
+            "Detect project root automatically",
+            "Provide access to Data, results, logs directories",
+            "All paths must be relative (no hardcoded absolute paths)"
+          ],
+          "max_lines": 50,
+          "validation": "Paths resolve correctly from any working directory"
+        },
+        {
+          "id": "2.2",
+          "name": "Implement ring buffer logger",
+          "priority": "high",
+          "dependencies": ["2.1"],
+          "files_to_create": ["src/utils/logger.py"],
+          "requirements": [
+            "Ring buffer with configurable max lines (default 1000)",
+            "Auto-rotation when limit reached",
+            "Timestamp each log entry",
+            "Log levels: DEBUG, INFO, WARNING, ERROR",
+            "Save to logs/ directory"
+          ],
+          "max_lines": 80,
+          "validation": "Logs rotate correctly, old entries removed"
+        }
+      ]
+    },
+    {
+      "phase": "3_data_handling",
+      "description": "Data loading, preprocessing, and validation",
+      "tasks": [
+        {
+          "id": "3.1",
+          "name": "Implement data loader module",
+          "priority": "critical",
+          "dependencies": ["2.1"],
+          "files_to_create": ["src/data_loader.py"],
+          "requirements": [
+            "Load Iris.csv using pandas with relative path",
+            "Map column names to standard format",
+            "Encode species labels (Setosa=0, Versicolor=1, Virginica=2)",
+            "Train/test split with configurable ratio (default 0.2)",
+            "Optional feature normalization (StandardScaler)",
+            "Fixed random_state=42 for reproducibility"
+          ],
+          "functions": [
+            "load_iris_data() -> tuple[np.ndarray, np.ndarray]",
+            "split_data(X, y, test_size) -> tuple[X_train, X_test, y_train, y_test]",
+            "normalize_features(X) -> np.ndarray",
+            "prepare_binary_labels(y, positive_class) -> np.ndarray"
+          ],
+          "max_lines": 100,
+          "validation": "Data loads correctly, shapes match expected (150, 4)"
+        }
+      ]
+    },
+    {
+      "phase": "4_sklearn_svm",
+      "description": "scikit-learn SVM implementation (reference baseline)",
+      "tasks": [
+        {
+          "id": "4.1",
+          "name": "Implement sklearn SVM classifier wrapper",
+          "priority": "critical",
+          "dependencies": ["3.1"],
+          "files_to_create": ["src/sklearn_svm.py"],
+          "requirements": [
+            "Wrapper class for sklearn.svm.SVC",
+            "Support linear and RBF kernels",
+            "Configurable C parameter (regularization)",
+            "Extract support vectors after training",
+            "Extract weight vector (for linear kernel)",
+            "Measure training time"
+          ],
+          "functions": [
+            "class SklearnSVM: __init__(kernel, C), fit(X, y), predict(X)",
+            "get_support_vectors() -> np.ndarray",
+            "get_weights() -> tuple[np.ndarray, float]",
+            "get_training_time() -> float"
+          ],
+          "max_lines": 100,
+          "validation": "Achieves >95% accuracy on Iris dataset"
+        }
+      ]
+    },
+    {
+      "phase": "5_qp_solver_svm",
+      "description": "Custom QP solver SVM using cvxopt - core educational component",
+      "tasks": [
+        {
+          "id": "5.1",
+          "name": "Implement QP problem formulation",
+          "priority": "critical",
+          "dependencies": ["3.1"],
+          "files_to_create": ["src/qp_svm.py"],
+          "requirements": [
+            "Build H matrix (Gram matrix): H[i,j] = y_i * y_j * x_i^T * x_j",
+            "Build constraint matrix G for inequalities",
+            "Build equality constraint for sum(alpha * y) = 0",
+            "Use cvxopt.solvers.qp() for optimization",
+            "Handle cvxopt matrix format (column-major)"
+          ],
+          "mathematical_formulation": {
+            "objective": "min (1/2) * alpha^T * H * alpha - sum(alpha)",
+            "inequality": "alpha >= 0",
+            "equality": "sum(alpha_i * y_i) = 0",
+            "note": "This is the DUAL formulation for efficiency"
+          },
+          "functions": [
+            "build_gram_matrix(X, y) -> np.ndarray",
+            "build_qp_matrices(X, y) -> tuple[P, q, G, h, A, b]",
+            "solve_qp(P, q, G, h, A, b) -> np.ndarray"
+          ],
+          "max_lines": 100,
+          "validation": "QP solver converges, returns valid alphas"
+        },
+        {
+          "id": "5.2",
+          "name": "Implement weight and bias extraction",
+          "priority": "critical",
+          "dependencies": ["5.1"],
+          "requirements": [
+            "Identify support vectors (alpha > threshold)",
+            "Compute w = sum(alpha_i * y_i * x_i) for support vectors",
+            "Compute b from KKT conditions: b = y_s - w^T * x_s",
+            "Average b over all support vectors for stability"
+          ],
+          "functions": [
+            "extract_support_vectors(alphas, threshold) -> np.ndarray",
+            "compute_weights(alphas, X, y) -> np.ndarray",
+            "compute_bias(w, X_sv, y_sv) -> float"
+          ],
+          "max_lines": 60,
+          "validation": "Weight vector similar to sklearn (cosine > 0.95)"
+        },
+        {
+          "id": "5.3",
+          "name": "Implement QP SVM predict function",
+          "priority": "critical",
+          "dependencies": ["5.2"],
+          "requirements": [
+            "Compute decision: sign(w^T * x + b)",
+            "Return class labels {-1, +1} for binary",
+            "Measure prediction time"
+          ],
+          "functions": [
+            "predict(X, w, b) -> np.ndarray",
+            "decision_function(X, w, b) -> np.ndarray"
+          ],
+          "max_lines": 30,
+          "validation": "Predictions match sklearn for linear kernel"
+        },
+        {
+          "id": "5.4",
+          "name": "Implement multi-class wrapper (One-vs-Rest)",
+          "priority": "high",
+          "dependencies": ["5.3"],
+          "files_to_create": ["src/multiclass.py"],
+          "requirements": [
+            "Train 3 binary classifiers (one per class vs rest)",
+            "Combine predictions using confidence scores",
+            "Handle tie-breaking consistently"
+          ],
+          "strategy": {
+            "classifier_0": "Setosa (+1) vs Versicolor+Virginica (-1)",
+            "classifier_1": "Versicolor (+1) vs Setosa+Virginica (-1)",
+            "classifier_2": "Virginica (+1) vs Setosa+Versicolor (-1)"
+          },
+          "max_lines": 80,
+          "validation": "Multi-class accuracy >90%"
+        }
+      ]
+    },
+    {
+      "phase": "6_metrics",
+      "description": "Evaluation metrics and comparison utilities",
+      "tasks": [
+        {
+          "id": "6.1",
+          "name": "Implement metrics calculation module",
+          "priority": "high",
+          "dependencies": ["4.1", "5.3"],
+          "files_to_create": ["src/metrics.py"],
+          "requirements": [
+            "Accuracy score calculation",
+            "Confusion matrix generation",
+            "Precision, recall, F1-score per class",
+            "Training time comparison",
+            "Weight vector cosine similarity",
+            "Support vector overlap percentage"
+          ],
+          "functions": [
+            "calculate_accuracy(y_true, y_pred) -> float",
+            "confusion_matrix(y_true, y_pred) -> np.ndarray",
+            "classification_report(y_true, y_pred) -> dict",
+            "cosine_similarity(w1, w2) -> float",
+            "support_vector_overlap(sv1, sv2) -> float"
+          ],
+          "max_lines": 100,
+          "validation": "Metrics match sklearn.metrics for accuracy"
+        }
+      ]
+    },
+    {
+      "phase": "7_visualization",
+      "description": "Graphs, charts, and visual comparison",
+      "tasks": [
+        {
+          "id": "7.1",
+          "name": "Implement decision boundary visualizer",
+          "priority": "high",
+          "dependencies": ["4.1", "5.3"],
+          "files_to_create": ["src/visualizer.py"],
+          "requirements": [
+            "2D PCA projection of 4D data",
+            "Decision boundary contour plot",
+            "Support vector highlighting (circles)",
+            "Margin visualization (dashed lines)",
+            "Class region coloring with transparency"
+          ],
+          "outputs": [
+            "decision_boundary_sklearn.png",
+            "decision_boundary_qp.png",
+            "decision_boundary_comparison.png"
+          ],
+          "max_lines": 100,
+          "validation": "Clear visual separation of classes"
+        },
+        {
+          "id": "7.2",
+          "name": "Implement comparison charts",
+          "priority": "high",
+          "dependencies": ["6.1", "7.1"],
+          "requirements": [
+            "Side-by-side confusion matrices (heatmaps)",
+            "Accuracy bar chart (sklearn vs QP)",
+            "Training time bar chart",
+            "Feature importance bar chart (|w| components)"
+          ],
+          "outputs": [
+            "confusion_matrix_sklearn.png",
+            "confusion_matrix_qp.png",
+            "comparison_accuracy.png",
+            "comparison_time.png",
+            "feature_importance.png"
+          ],
+          "max_lines": 80,
+          "validation": "All 5+ visualizations generated"
+        },
+        {
+          "id": "7.3",
+          "name": "Implement support vector visualization",
+          "priority": "medium",
+          "dependencies": ["7.1"],
+          "requirements": [
+            "Highlight support vectors from both methods",
+            "Show overlap/difference between methods",
+            "Annotate with sample indices"
+          ],
+          "outputs": ["support_vectors_comparison.png"],
+          "max_lines": 50,
+          "validation": "Support vectors clearly marked"
+        }
+      ]
+    },
+    {
+      "phase": "8_integration",
+      "description": "Main pipeline orchestration",
+      "tasks": [
+        {
+          "id": "8.1",
+          "name": "Implement main.py orchestration",
+          "priority": "critical",
+          "dependencies": ["4.1", "5.4", "6.1", "7.2"],
+          "files_to_create": ["main.py"],
+          "requirements": [
+            "Command-line argument parsing (C, kernel, test_size)",
+            "Load and preprocess data",
+            "Run sklearn SVM and measure time",
+            "Run QP solver SVM and measure time",
+            "Calculate all comparison metrics",
+            "Generate all visualizations",
+            "Save results to JSON",
+            "Print formatted summary to console"
+          ],
+          "flow": [
+            "1. Parse arguments / use defaults",
+            "2. Load Iris data with train/test split",
+            "3. Train sklearn SVM, record metrics",
+            "4. Train QP SVM (OvR for multi-class), record metrics",
+            "5. Compare weight vectors (cosine similarity)",
+            "6. Compare support vectors (overlap %)",
+            "7. Generate all visualizations",
+            "8. Save results/examples/run_N/",
+            "9. Print comparison summary"
+          ],
+          "max_lines": 150,
+          "validation": "Complete pipeline runs < 30 seconds"
+        }
+      ]
+    },
+    {
+      "phase": "9_testing",
+      "description": "Three complete test runs with different parameters",
+      "tasks": [
+        {
+          "id": "9.1",
+          "name": "Run 1: Default parameters (baseline)",
+          "priority": "critical",
+          "dependencies": ["8.1"],
+          "parameters": {
+            "C": 1.0,
+            "kernel": "linear",
+            "test_size": 0.2,
+            "random_state": 42
+          },
+          "expected_results": {
+            "sklearn_accuracy": ">95%",
+            "qp_accuracy": ">90%",
+            "cosine_similarity": ">0.95"
+          },
+          "outputs": [
+            "results/examples/run_1/metrics.json",
+            "results/examples/run_1/summary.txt",
+            "results/examples/run_1/graphs/"
+          ]
+        },
+        {
+          "id": "9.2",
+          "name": "Run 2: High regularization (smaller margin)",
+          "priority": "critical",
+          "dependencies": ["9.1"],
+          "parameters": {
+            "C": 0.1,
+            "kernel": "linear",
+            "test_size": 0.3,
+            "random_state": 42
+          },
+          "purpose": "Test effect of strong regularization on margin and support vectors",
+          "outputs": [
+            "results/examples/run_2/metrics.json",
+            "results/examples/run_2/summary.txt",
+            "results/examples/run_2/graphs/"
+          ]
+        },
+        {
+          "id": "9.3",
+          "name": "Run 3: Low regularization with sklearn RBF comparison",
+          "priority": "critical",
+          "dependencies": ["9.2"],
+          "parameters": {
+            "C": 10.0,
+            "kernel_sklearn": "rbf",
+            "kernel_qp": "linear",
+            "test_size": 0.2,
+            "random_state": 42
+          },
+          "purpose": "Compare linear QP against nonlinear RBF to show kernel advantage",
+          "outputs": [
+            "results/examples/run_3/metrics.json",
+            "results/examples/run_3/summary.txt",
+            "results/examples/run_3/graphs/"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "10_documentation",
+      "description": "README and final documentation",
+      "tasks": [
+        {
+          "id": "10.1",
+          "name": "Write comprehensive README.md",
+          "priority": "critical",
+          "dependencies": ["9.3"],
+          "files_to_create": ["README.md"],
+          "sections": [
+            "Abstract (2-3 sentences)",
+            "Applications & Use Cases",
+            "Features",
+            "Dataset Description",
+            "Mathematical Foundations (SVM Theory)",
+            "  - Inner Product Decision Rule",
+            "  - Three Mathematical Tricks",
+            "  - QP Formulation",
+            "  - Support Vectors",
+            "Environment & Requirements",
+            "Virtual Environment Setup (UV)",
+            "Installation Instructions",
+            "How to Run",
+            "Project Structure",
+            "Code Files Summary (with line counts)",
+            "Results & Examples",
+            "  - Run 1: Default Parameters",
+            "  - Run 2: High Regularization",
+            "  - Run 3: RBF Comparison",
+            "Results Comparison Table",
+            "Learning Demonstration",
+            "What I Learned",
+            "Troubleshooting"
+          ],
+          "requirements": [
+            "Include all visualization images",
+            "Code files table with line counts",
+            "All 3 test run results with screenshots",
+            "Mathematical formulas in LaTeX"
+          ]
+        },
+        {
+          "id": "10.2",
+          "name": "Verify code quality requirements",
+          "priority": "critical",
+          "dependencies": ["10.1"],
+          "checks": [
+            "All Python files <= 150 lines",
+            "All functions have type hints",
+            "All functions have docstrings with WHY",
+            "All paths are relative (pathlib)",
+            "Ring buffer logging is used",
+            "No basic Python loops (NumPy only)"
+          ]
+        },
+        {
+          "id": "10.3",
+          "name": "Final fresh environment test",
+          "priority": "critical",
+          "dependencies": ["10.2"],
+          "steps": [
+            "Delete .venv directory",
+            "Create new venv with UV: uv venv",
+            "Install dependencies: uv pip install -r requirements.txt",
+            "Run: python main.py",
+            "Verify all outputs generated",
+            "Verify all graphs created",
+            "Verify accuracy meets targets"
+          ],
+          "validation": "Project works from clean state"
+        }
+      ]
+    }
+  ],
+  "file_structure": {
+    "root": [
+      "README.md",
+      "main.py",
+      "requirements.txt",
+      ".gitignore"
+    ],
+    "src": [
+      "__init__.py",
+      "data_loader.py",
+      "sklearn_svm.py",
+      "qp_svm.py",
+      "multiclass.py",
+      "metrics.py",
+      "visualizer.py"
+    ],
+    "src/utils": [
+      "__init__.py",
+      "paths.py",
+      "logger.py"
+    ],
+    "Docs": [
+      "PRD.md",
+      "tasks.json"
+    ],
+    "Data/Iris-Species": [
+      "Iris.csv"
+    ],
+    "results/graphs": [
+      "decision_boundary_sklearn.png",
+      "decision_boundary_qp.png",
+      "decision_boundary_comparison.png",
+      "confusion_matrix_sklearn.png",
+      "confusion_matrix_qp.png",
+      "comparison_accuracy.png",
+      "comparison_time.png",
+      "feature_importance.png",
+      "support_vectors_comparison.png"
+    ],
+    "results/examples": [
+      "run_1/{metrics.json, summary.txt, graphs/}",
+      "run_2/{metrics.json, summary.txt, graphs/}",
+      "run_3/{metrics.json, summary.txt, graphs/}"
+    ],
+    "logs": [
+      "app.log",
+      "config/log_config.json"
+    ]
+  },
+  "dependencies": {
+    "numpy": ">=1.24.0",
+    "pandas": ">=2.0.0",
+    "scikit-learn": ">=1.3.0",
+    "cvxopt": ">=1.3.0",
+    "matplotlib": ">=3.7.0",
+    "seaborn": ">=0.12.0"
+  },
+  "success_metrics": {
+    "sklearn_accuracy": ">95%",
+    "qp_accuracy": ">90%",
+    "weight_cosine_similarity": ">0.95",
+    "execution_time": "<30 seconds",
+    "max_file_lines": 150,
+    "minimum_test_runs": 3,
+    "minimum_visualizations": 5
+  },
+  "code_quality_rules": {
+    "max_lines_per_file": 150,
+    "type_hints": "mandatory",
+    "docstrings": "mandatory with WHY explanation",
+    "comments": "explain to 15-year-old level",
+    "paths": "relative only (pathlib)",
+    "logging": "ring buffer mandatory",
+    "loops": "NumPy vectorization only (no basic Python loops)",
+    "random_state": 42
+  }
+}

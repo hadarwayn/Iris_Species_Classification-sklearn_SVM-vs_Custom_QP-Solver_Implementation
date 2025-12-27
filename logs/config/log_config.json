@@ -1,0 +1,6 @@
+{
+    "max_lines": 1000,
+    "max_files": 5,
+    "log_level": "INFO",
+    "format": "%(asctime)s - %(levelname)s - %(message)s"
+}
