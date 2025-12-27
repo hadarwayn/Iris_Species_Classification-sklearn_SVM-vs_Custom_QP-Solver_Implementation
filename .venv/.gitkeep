@@ -1,0 +1,58 @@
+# Virtual Environment Setup Instructions
+
+This folder contains the Python virtual environment for this project.
+The actual venv files are NOT committed to git (too large and machine-specific).
+
+## Setup Instructions
+
+### Windows (PowerShell)
+```powershell
+# Navigate to project root
+cd C:\path\to\L23
+
+# Create virtual environment using UV
+uv venv
+
+# Activate virtual environment
+.venv\Scripts\activate
+
+# Install dependencies
+uv pip install -r requirements.txt
+
+# Verify installation
+python -c "import sklearn, cvxopt, numpy, pandas; print('All dependencies OK')"
+```
+
+### Linux/macOS (or WSL)
+```bash
+# Navigate to project root
+cd /path/to/L23
+
+# Create virtual environment using UV
+uv venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install dependencies
+uv pip install -r requirements.txt
+
+# Verify installation
+python -c "import sklearn, cvxopt, numpy, pandas; print('All dependencies OK')"
+```
+
+## Why UV?
+- 10-100x faster than pip (parallel downloads)
+- Better dependency resolution
+- Recommended by PROJECT_GUIDELINES.md
+
+## Running the Project
+After activating the virtual environment:
+```bash
+python main.py
+```
+
+Or with custom parameters:
+```bash
+python main.py --C 1.0 --kernel linear --test-size 0.2 --run 1
+```

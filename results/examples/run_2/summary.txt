@@ -2,5 +2,5 @@
          SVM Comparison Summary
 ==================================================
 Accuracy:     sklearn=0.9111  QP=0.9333
-Train Time:   sklearn=0.0012s  QP=0.4407s
+Train Time:   sklearn=0.0012s  QP=0.4169s
 ==================================================

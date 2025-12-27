@@ -1,5 +1,6 @@
-# Virtual environment
-.venv/
+# Virtual environment (ignore contents, keep .gitkeep for instructions)
+.venv/*
+!.venv/.gitkeep
 venv/
 ENV/
 

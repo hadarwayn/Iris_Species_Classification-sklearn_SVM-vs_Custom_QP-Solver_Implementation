@@ -130,22 +130,54 @@ seaborn>=0.12.0
 
 ---
 
-## Virtual Environment Setup (UV)
+## Virtual Environment Setup (UV) - MANDATORY
+
+> **IMPORTANT:** This project uses UV for virtual environment management.
+> UV is 10-100x faster than pip and provides better dependency resolution.
 
 ### Windows (PowerShell)
 ```powershell
+# Navigate to project directory
 cd C:\path\to\L23
+
+# Create virtual environment
 uv venv
+
+# Activate virtual environment (you should see (.venv) in your prompt)
 .venv\Scripts\activate
+
+# Install all dependencies
 uv pip install -r requirements.txt
+
+# Verify installation
+python -c "import sklearn, cvxopt, numpy, pandas; print('All dependencies OK')"
 ```
 
-### Linux/macOS
+### Linux/macOS (or WSL)
 ```bash
+# Navigate to project directory
 cd /path/to/L23
+
+# Create virtual environment
 uv venv
+
+# Activate virtual environment (you should see (.venv) in your prompt)
 source .venv/bin/activate
+
+# Install all dependencies
 uv pip install -r requirements.txt
+
+# Verify installation
+python -c "import sklearn, cvxopt, numpy, pandas; print('All dependencies OK')"
+```
+
+### Installing UV (if not already installed)
+```bash
+# Linux/macOS
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows PowerShell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 ---
@@ -183,6 +215,8 @@ L23/
 ├── requirements.txt           # Dependencies
 ├── README.md                  # This file
 ├── .gitignore
+├── .venv/                     # Virtual environment (UV)
+│   └── .gitkeep               # Setup instructions
 ├── Data/
 │   └── Iris-Species/
 │       └── Iris.csv           # Dataset (150 samples)

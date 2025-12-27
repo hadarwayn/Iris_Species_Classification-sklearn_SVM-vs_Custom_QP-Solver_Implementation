@@ -30,7 +30,7 @@
   },
   "qp_solver": {
     "accuracy": 1.0,
-    "training_time": 0.5726,
+    "training_time": 0.5,
     "n_support_vectors": 114,
     "classification_report": {
       "class_0": {
